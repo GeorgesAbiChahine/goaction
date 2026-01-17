@@ -19,7 +19,7 @@ const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
 });
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;

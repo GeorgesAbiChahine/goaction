@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type React from "react";
 import { useState } from "react";
 
@@ -32,13 +33,14 @@ export type Route = {
   }[];
 };
 
+
 export default function DashboardNavigation({ routes }: { routes: Route[] }) {
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [openCollapsible, setOpenCollapsible] = useState<string | null>(null);
-
+  const pathname = usePathname();
   return (
-    <SidebarMenu>
+    <SidebarMenu className="gap-0.5">
       {routes.map((route) => {
         const isOpen = !isCollapsed && openCollapsible === route.id;
         const hasSubRoutes = !!route.subs?.length;
@@ -60,7 +62,7 @@ export default function DashboardNavigation({ routes }: { routes: Route[] }) {
                       isOpen
                         ? "bg-sidebar-muted text-foreground"
                         : "text-muted-foreground hover:bg-sidebar-muted hover:text-foreground",
-                      isCollapsed && "justify-center"
+                      isCollapsed && "justify-center",
                     )}
                   >
                     {route.icon}
@@ -93,7 +95,7 @@ export default function DashboardNavigation({ routes }: { routes: Route[] }) {
                             <Link
                               href={subRoute.link}
                               prefetch={true}
-                              className="flex items-center rounded-md px-4 py-1.5 text-sm font-medium text-muted-foreground hover:bg-sidebar-muted hover:text-foreground"
+                              className={cn("flex items-center rounded-md px-4 py-1.5 text-sm font-medium text-muted-foreground hover:bg-sidebar-muted hover:text-foreground", pathname === subRoute.link || pathname.startsWith(subRoute.link) && "bg-sidebar-muted text-foreground")}
                             >
                               {subRoute.title}
                             </Link>
@@ -111,7 +113,8 @@ export default function DashboardNavigation({ routes }: { routes: Route[] }) {
                   prefetch={true}
                   className={cn(
                     "flex items-center rounded-lg px-2 transition-colors text-muted-foreground hover:bg-sidebar-muted hover:text-foreground",
-                    isCollapsed && "justify-center"
+                    isCollapsed && "justify-center",
+                    pathname === route.link && "bg-muted! text-foreground"
                   )}
                 >
                   {route.icon}
