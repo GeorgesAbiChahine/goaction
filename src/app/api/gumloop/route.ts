@@ -1,19 +1,22 @@
-import { NextRequest } from "next/server";
 import { startGumloop } from "@/lib/gumloop";
+import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const conversation = body?.conversation;
 
-    if (!conversation || typeof conversation !== "string") {
+    if (!body) {
       return new Response(
-        JSON.stringify({ error: "Missing or invalid 'conversation'" }),
+        JSON.stringify({ error: "Missing body" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    const resp = await startGumloop(conversation);
+    const resp = await startGumloop(body);
+    
+    if (!resp.ok) {
+        console.error("Gumloop backend failed:", resp.status, await resp.text().catch(() => "No body"));
+    }
 
     const contentType = resp.headers.get("content-type") || "application/json";
     const text = await resp.text();

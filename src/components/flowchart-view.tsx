@@ -27,18 +27,14 @@ function CustomNode({ data }: { data: { title: string; label: string } }) {
                             {data.title}
                         </div>
                     </div>
-                    <p className="text-sm text-muted-foreground text-start leading-relaxed">
+                    <div className="text-sm text-muted-foreground text-start leading-relaxed whitespace-pre-wrap">
                         {data.label}
-                    </p>
+                    </div>
                 </div>
             </Card>
             <Handle type="source" position={Position.Right} className="!bg-primary !w-2 !h-2 !-right-2" />
         </div>
     )
-}
-
-const nodeTypes = {
-    card: CustomNode,
 }
 
 // Auto layout helper
@@ -89,6 +85,10 @@ interface FlowchartViewProps {
 }
 
 export function FlowchartView({ initialNodes, initialEdges, className, onSave }: FlowchartViewProps) {
+    const nodeTypes = React.useMemo(() => ({
+        card: CustomNode,
+    }), [])
+
     const { nodes: layoutedNodes, edges: layoutedEdges } = React.useMemo(() => {
         return getLayoutedElements(initialNodes, initialEdges)
     }, [initialNodes, initialEdges])
@@ -104,26 +104,12 @@ export function FlowchartView({ initialNodes, initialEdges, className, onSave }:
     }, [initialNodes, initialEdges, setNodes, setEdges])
 
     const onNodeDragStop = React.useCallback((_: any, node: Node) => {
-        // We need the latest nodes. Since onNodeDragStop is triggered after drag, 
-        // 'nodes' state might be one frame behind or up to date depending on batching.
-        // But actually, we want the node that *was* dragged to be updated in our set.
-        // The safe way is to map over 'nodes' and replace the dragged node with the event node (which has new pos).
-        // Actually, 'nodes' state *should* be updated by onNodesChange during the drag.
-        // Let's assume 'nodes' is fresh enough or use a functional update pattern if we were setting state.
-        // But here we need to call onSave.
-        // Let's rely on React Flow's internal state management?
-        // No, we useNodesState.
-
-        // To be safe, let's construct the new nodes list using the passed 'node' (which has the new position)
-        setNodes((nds) => {
-            const updatedNodes = nds.map((n) => n.id === node.id ? { ...n, position: node.position } : n);
-            if (onSave) {
-                // Defer the save slightly or call it directly
-                onSave(updatedNodes, edges);
-            }
-            return updatedNodes;
-        });
-    }, [edges, onSave, setNodes])
+        const updatedNodes = nodes.map((n) => n.id === node.id ? { ...n, position: node.position } : n);
+        setNodes(updatedNodes);
+        if (onSave) {
+            onSave(updatedNodes, edges);
+        }
+    }, [nodes, edges, onSave, setNodes])
 
     return (
         <div className={className}>

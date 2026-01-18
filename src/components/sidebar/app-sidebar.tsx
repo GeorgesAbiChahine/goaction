@@ -21,12 +21,6 @@ import { useUser } from "@auth0/nextjs-auth0";
 
 const dashboardRoutes: Route[] = [
   {
-    id: "home",
-    title: "Home",
-    icon: <Home className="size-4" />,
-    link: "/dashboard",
-  },
-  {
     id: "files",
     title: "Files",
     icon: <Files className="size-4" />,
@@ -52,7 +46,7 @@ export function DashboardSidebar() {
         <a href='/dashboard' className="flex justify-center items-center gap-2">
 
           {!isCollapsed ? (
-            <div className="text-2xl text-center my-auto font-(family-name:--font-instrument-serif)">vectra</div>
+            <div className="text-2xl text-center my-auto font-(family-name:--font-instrument-serif)">goAction</div>
           )
             :
             <div className="text-2xl size-8 flex justify-center items-center text-center my-auto font-(family-name:--font-instrument-serif)">V</div>
