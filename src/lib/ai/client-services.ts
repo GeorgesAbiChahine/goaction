@@ -21,7 +21,7 @@ export async function getScribeToken() {
     try {
         const client = new ElevenLabsClient({ apiKey });
         const response = await client.tokens.singleUse.create("realtime_scribe");
-        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+        // biome-ignore lint/suspicious/noExplicitAny: ignore
         const tokenData = response as any;
         return tokenData.token || tokenData;
     } catch (e) {

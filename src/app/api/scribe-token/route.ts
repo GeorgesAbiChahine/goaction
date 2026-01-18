@@ -6,9 +6,9 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) {
-    console.error("ELEVENLABS_API_KEY is not set in environment.");
+    console.error("ELEVENLABS_API_KEY is not set in env.");
     return NextResponse.json(
-      { error: "ELEVENLABS_API_KEY is missing" },
+      { error: "ELEVENLABS_API_KEY not here" },
       { status: 500 },
     );
   }

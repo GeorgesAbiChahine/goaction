@@ -59,7 +59,7 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
             const stored = localStorage.getItem('files');
             if (stored) {
                 const files = JSON.parse(stored);
-                // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                // biome-ignore lint/suspicious/noExplicitAny: ignore
                 const updatedFiles = files.map((f: any) =>
                     f.id === fileId ? { ...f, content: newValue } : f
                 );
@@ -92,7 +92,7 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
         let max = 0;
         const regex = /\[Recording (\d+)\]:/;
 
-        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+        // biome-ignore lint/suspicious/noExplicitAny: ignore
         const scanNodes = (nodes: any[]) => {
             for (const node of nodes) {
                 if (node.text) {
@@ -114,7 +114,7 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
 
     const recordingCounterRef = useRef(initialCounter);
 
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    // biome-ignore lint/suspicious/noExplicitAny: ignore
     const [pendingSegments, setPendingSegments] = useState<any[]>([]);
 
     const scribe = useScribe({
@@ -126,9 +126,9 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
                 if (err instanceof Error) {
                     errorMessage = err.message;
                 } else if (typeof err === 'object' && err !== null) {
-                    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                    // biome-ignore lint/suspicious/noExplicitAny: ignore
                     if ("message" in err) errorMessage = String((err as any).message);
-                    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                    // biome-ignore lint/suspicious/noExplicitAny: ignore
                     else if ("type" in err) errorMessage = `Connection error: ${(err as any).type}`;
                     else errorMessage = JSON.stringify(err);
                 } else {
@@ -141,7 +141,7 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
         },
     });
 
-    // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+    // biome-ignore lint/correctness/useExhaustiveDependencies: ignore
     useEffect(() => {
         const handler = (event: PromiseRejectionEvent) => {
             event.preventDefault();
@@ -201,9 +201,9 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
                 if (err instanceof Error) {
                     errorMessage = err.message;
                 } else if (typeof err === 'object' && err !== null) {
-                    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                    // biome-ignore lint/suspicious/noExplicitAny: ignore
                     if ("message" in err) errorMessage = String((err as any).message);
-                    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                    // biome-ignore lint/suspicious/noExplicitAny: ignore
                     else if ("type" in err) errorMessage = `Connection error: ${(err as any).type}`;
                     else errorMessage = "Connection failed";
                 } else {
@@ -233,9 +233,9 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
     const handleManualCommit = () => {
         if (pendingSegments.length === 0) return;
 
-        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+        // biome-ignore lint/suspicious/noExplicitAny: ignore
         const slateEditor = editor as any;
-        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+        // biome-ignore lint/suspicious/noExplicitAny: ignore
         const fullText = pendingSegments.map((s: any) => s.text).filter(Boolean).join(' ');
 
         if (!fullText.trim()) return;
@@ -263,9 +263,9 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
     const [reviewActions, setReviewActions] = useState<ActionItem[] | null>(null);
 
     const checkHasContent = (v: Value) => {
-        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+        // biome-ignore lint/suspicious/noExplicitAny: ignore
         return v.some((node: any) =>
-            // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+            // biome-ignore lint/suspicious/noExplicitAny: ignore
             node.children?.some((child: any) => child.text && child.text.trim().length > 0)
         );
     };
@@ -279,9 +279,9 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
     const runTool = async () => {
         if (!selectedTool) return;
 
-        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+        // biome-ignore lint/suspicious/noExplicitAny: ignore
         const text = editor.children
-            // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+            // biome-ignore lint/suspicious/noExplicitAny: ignore
             .map((n: any) => n.children?.map((c: any) => c.text).join('') || '')
             .join('\n');
 
@@ -318,7 +318,7 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
                         const stored = localStorage.getItem('files');
                         if (stored) {
                             const files = JSON.parse(stored);
-                            // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                            // biome-ignore lint/suspicious/noExplicitAny: ignore
                             const updatedFiles = files.map((f: any) =>
                                 f.id === fileId ? { ...f, flowchart: data } : f
                             );
@@ -329,7 +329,6 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
                     }
 
                     setHasFlowchart(true);
-                    // Navigate to flowchart page
                     router.push(`/dashboard/file/${fileId}/flowchart`);
                 }
                 return;
@@ -370,11 +369,11 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
                 const data = await res.json();
 
                 if (data && Array.isArray(data)) {
-                    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                    // biome-ignore lint/suspicious/noExplicitAny: ignore
                     (editor as any).withoutNormalizing(() => {
                         editor.selection = null;
                         editor.children = data;
-                        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                        // biome-ignore lint/suspicious/noExplicitAny: ignore
                         (editor as any).onChange();
                     });
                     saveToFile(data);
@@ -398,7 +397,7 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
 
     const showPartial = scribe.isConnected && scribe.partialTranscript && scribe.partialTranscript !== lastCapturedPartialRef.current;
 
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    // biome-ignore lint/suspicious/noExplicitAny: ignore
     const allPendingText = [
         ...pendingSegments.map((s: any) => s.text),
         showPartial ? scribe.partialTranscript : null
@@ -502,9 +501,9 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
                                     return "Flowchart already generated, redirecting you to it.";
                                 }
 
-                                // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                                // biome-ignore lint/suspicious/noExplicitAny: ignore
                                 const text = editor.children
-                                    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                                    // biome-ignore lint/suspicious/noExplicitAny: ignore
                                     .map((n: any) => n.children?.map((c: any) => c.text).join('') || '')
                                     .join('\n');
                                 if (!text.trim()) return "Document is empty.";
@@ -524,7 +523,7 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
                                             const stored = localStorage.getItem('files');
                                             if (stored) {
                                                 const files = JSON.parse(stored);
-                                                // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                                                // biome-ignore lint/suspicious/noExplicitAny: ignore
                                                 const updatedFiles = files.map((f: any) =>
                                                     f.id === fileId ? { ...f, flowchart: data } : f
                                                 );
@@ -544,9 +543,9 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
                             }
 
                             if (toolName === "find_actions") {
-                                // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                                // biome-ignore lint/suspicious/noExplicitAny: ignore
                                 const text = editor.children
-                                    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                                    // biome-ignore lint/suspicious/noExplicitAny: ignore
                                     .map((n: any) => n.children?.map((c: any) => c.text).join('') || '')
                                     .join('\n');
 
@@ -573,9 +572,9 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
 
                             if (toolName !== "format" && toolName !== "summarize") return "Tool not found";
 
-                            // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                            // biome-ignore lint/suspicious/noExplicitAny: ignore
                             const text = editor.children
-                                // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                                // biome-ignore lint/suspicious/noExplicitAny: ignore
                                 .map((n: any) => n.children?.map((c: any) => c.text).join('') || '')
                                 .join('\n');
 
@@ -593,11 +592,11 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
                                 if (!res.ok) throw new Error("API Failed");
                                 const data = await res.json();
                                 if (data && Array.isArray(data)) {
-                                    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                                    // biome-ignore lint/suspicious/noExplicitAny: ignore
                                     (editor as any).withoutNormalizing(() => {
                                         editor.selection = null;
                                         editor.children = data;
-                                        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                                        // biome-ignore lint/suspicious/noExplicitAny: ignore
                                         (editor as any).onChange();
                                     });
                                     saveToFile(data);
@@ -628,7 +627,7 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
 
 export default function FilePage() {
     const params = useParams();
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    // biome-ignore lint/suspicious/noExplicitAny: ignore
     const fileId = Array.isArray(params?.['file-id']) ? params['file-id'][0] : params?.['file-id'] as any;
 
     const [isLoading, setIsLoading] = useState(true);
@@ -643,7 +642,7 @@ export default function FilePage() {
             const stored = localStorage.getItem('files');
             if (stored) {
                 const files = JSON.parse(stored);
-                // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                // biome-ignore lint/suspicious/noExplicitAny: ignore
                 const file = files.find((f: any) => f.id === fileId);
                 if (file) {
                     if (file.content) setFileContent(file.content);
