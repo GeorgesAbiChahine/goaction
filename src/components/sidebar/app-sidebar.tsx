@@ -52,10 +52,10 @@ export function DashboardSidebar() {
         <a href='/dashboard' className="flex justify-center items-center gap-2">
 
           {!isCollapsed ? (
-            <div className="text-2xl text-center my-auto font-(family-name:--font-instrument-serif)">goAction</div>
+            <div className="text-2xl text-center my-auto font-(family-name:--font-instrument-serif)">vectra</div>
           )
             :
-            <div className="text-2xl size-8 flex justify-center items-center text-center my-auto font-(family-name:--font-instrument-serif)">gA</div>
+            <div className="text-2xl size-8 flex justify-center items-center text-center my-auto font-(family-name:--font-instrument-serif)">V</div>
 
           }
         </a>

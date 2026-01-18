@@ -106,7 +106,7 @@ const Files = () => {
           </DialogContent>
         </Dialog>
       </div>
-      <TableView />
+      <TableView files={files} onDelete={handleDelete} />
     </div>
   );
 };

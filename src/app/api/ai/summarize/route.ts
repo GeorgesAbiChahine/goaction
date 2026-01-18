@@ -1,5 +1,5 @@
 import { getGeminiModel } from "@/lib/ai/gemini";
-import { buildPlatePrompt } from "@/lib/ai/platePrompt";
+import { buildSummarizePrompt } from "@/lib/ai/summarizePrompt";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     }
 
     const model = getGeminiModel();
-    const prompt = buildPlatePrompt(text);
+    const prompt = buildSummarizePrompt(text);
 
     const result = await model.generateContent(prompt);
     const raw = result.response.text();
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("Gemini error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to format text" },
+      { error: error instanceof Error ? error.message : "Failed to summarize text" },
       { status: 500 }
     );
   }

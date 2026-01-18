@@ -1,7 +1,21 @@
 "use client";
 
 import { BlockquoteElement } from '@/components/ui/blockquote-node';
+import { Button } from "@/components/ui/button";
+import { ConversationBar } from '@/components/ui/conversation-bar';
+import {
+    Empty,
+    EmptyContent,
+    EmptyDescription,
+    EmptyHeader,
+    EmptyMedia,
+    EmptyTitle,
+} from "@/components/ui/empty";
 import { H1Element, H2Element, H3Element } from '@/components/ui/heading-node';
+import {
+    NativeSelect,
+    NativeSelectOption,
+} from "@/components/ui/native-select";
 import { Sidebar, SidebarContent, SidebarGroupLabel } from "@/components/ui/sidebar";
 import { useScribe } from "@elevenlabs/react";
 import {
@@ -14,25 +28,14 @@ import {
     UnderlinePlugin
 } from '@platejs/basic-nodes/react';
 import { Loader, ToolboxIcon } from 'lucide-react';
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Value } from 'platejs';
 import { usePlateEditor } from 'platejs/react';
 import { useEffect, useMemo, useRef, useState } from "react";
 import Editor from "./editor";
 import TranscriptInput from "./transcript-input";
-import {
-    Empty,
-    EmptyContent,
-    EmptyDescription,
-    EmptyHeader,
-    EmptyMedia,
-    EmptyTitle,
-} from "@/components/ui/empty"
-import { Button } from '@/components/ui/button';
-import {
-    NativeSelect,
-    NativeSelectOption,
-} from "@/components/ui/native-select"
+
+// ... (existing imports)
 
 const initialEmptyValue: Value = [
     {
@@ -41,7 +44,17 @@ const initialEmptyValue: Value = [
     },
 ];
 
-function FileEditorInner({ initialContent, fileId }: { initialContent: Value, fileId: string }) {
+interface ToolHistoryItem {
+    id: string;
+    tool: "format" | "summarize";
+    timestamp: Date;
+}
+
+function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitle }: { initialContent: Value, fileId: string, initialHasFlowchart: boolean, fileTitle: string }) {
+
+    const router = useRouter();
+    const [hasFlowchart, setHasFlowchart] = useState(initialHasFlowchart); // Check logic
+
     const saveToFile = (newValue: Value) => {
         try {
             const stored = localStorage.getItem('files');
@@ -201,6 +214,119 @@ function FileEditorInner({ initialContent, fileId }: { initialContent: Value, fi
         setPendingSegments([]);
     };
 
+    const [isFormatting, setIsFormatting] = useState(false);
+    const [selectedTool, setSelectedTool] = useState("");
+    const [toolHistory, setToolHistory] = useState<ToolHistoryItem[]>([]);
+
+    const checkHasContent = (v: Value) => {
+        return v.some((node: any) =>
+            node.children?.some((child: any) => child.text && child.text.trim().length > 0)
+        );
+    };
+
+    const [hasContent, setHasContent] = useState(() => checkHasContent(initialContent));
+
+    const handleToolSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setSelectedTool(e.target.value);
+    };
+
+    const runTool = async () => {
+        if (!selectedTool) return;
+
+        const text = editor.children
+            .map((n: any) => n.children?.map((c: any) => c.text).join('') || '')
+            .join('\n');
+
+        if (!text.trim()) {
+            console.warn("No text to process");
+            return;
+        }
+
+        const tool = selectedTool;
+        setIsFormatting(true);
+
+        try {
+            if (tool === "create_flowchart") {
+                if (hasFlowchart) {
+                    alert("Flowchart already exists! Redirecting to view...");
+                    router.push(`/dashboard/file/${fileId}/flowchart`);
+                    return;
+                }
+
+                const res = await fetch("/api/ai/flowchart", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text }),
+                });
+
+                if (!res.ok) {
+                    const errorData = await res.json().catch(() => ({}));
+                    throw new Error(errorData.error || "Flowchart generation failed");
+                }
+                const data = await res.json();
+
+                if (data.nodes && data.edges) {
+                    // Save flowchart data to localStorage
+                    try {
+                        const stored = localStorage.getItem('files');
+                        if (stored) {
+                            const files = JSON.parse(stored);
+                            // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                            const updatedFiles = files.map((f: any) =>
+                                f.id === fileId ? { ...f, flowchart: data } : f
+                            );
+                            localStorage.setItem('files', JSON.stringify(updatedFiles));
+                        }
+                    } catch (e) {
+                        console.error("Failed to save flowchart data", e);
+                    }
+
+                    setHasFlowchart(true);
+                    // Navigate to flowchart page
+                    router.push(`/dashboard/file/${fileId}/flowchart`);
+                }
+                return;
+            }
+
+            if (tool === "format" || tool === "summarize") {
+                const endpoint = tool === "format" ? "/api/ai/format" : "/api/ai/summarize";
+                const res = await fetch(endpoint, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text }),
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error || `${tool === "format" ? "Formatting" : "Summarization"} failed`);
+                }
+                const data = await res.json();
+
+                if (data && Array.isArray(data)) {
+                    editor.withoutNormalizing(() => {
+                        editor.selection = null;
+                        editor.children = data;
+                        editor.onChange();
+                    });
+                    saveToFile(data);
+
+                    setHasContent(checkHasContent(data));
+
+                    setToolHistory(prev => [{
+                        id: Date.now().toString(),
+                        tool: tool as "format" | "summarize",
+                        timestamp: new Date(),
+                    }, ...prev]);
+                }
+            }
+        } catch (err) {
+            console.error(`${tool} error:`, err);
+        } finally {
+            setIsFormatting(false);
+            setSelectedTool("");
+        }
+    };
+
     const showPartial = scribe.isConnected && scribe.partialTranscript && scribe.partialTranscript !== lastCapturedPartialRef.current;
 
     const allPendingText = [
@@ -208,51 +334,185 @@ function FileEditorInner({ initialContent, fileId }: { initialContent: Value, fi
         showPartial ? scribe.partialTranscript : null
     ].filter(Boolean).join(' ').trim();
 
+    const handleDiscard = () => {
+        setPendingSegments([]);
+    };
+
+
+
     return (
         <div className="flex flex-row w-full relative h-full">
             <div className="w-full h-[calc(100%+52px)] -mt-13 relative">
                 <Editor
                     editor={editor}
-                    onCommit={handleManualCommit}
-                    pendingCount={pendingSegments.length}
-                    onChange={({ value }: { value: Value }) => saveToFile(value)}
+                    onChange={({ value }: { value: Value }) => {
+                        saveToFile(value);
+                        setHasContent(checkHasContent(value));
+                    }}
+                    hasFlowchart={hasFlowchart}
+                    onOpenFlowchart={() => router.push(`/dashboard/file/${fileId}/flowchart`)}
+                    fileTitle={fileTitle}
                 />
 
-                {allPendingText && (
-                    <div className="absolute bottom-5 left-1/2 font-medium transform -translate-x-1/2 bg-accent text-primary px-4 py-2 rounded-lg text-base pointer-events-none z-50 animate-in fade-in slide-in-from-bottom-2 max-w-full text-center">
-                        {allPendingText}
-                    </div>
-                )}
+                <div className="absolute bottom-6 w-full flex justify-center flex-col items-center gap-4 z-50 max-w-full pointer-events-none">
+                    {allPendingText && (
+                        <div className="bg-accent text-primary font-medium px-4 py-2 rounded-lg text-base text-center animate-in fade-in slide-in-from-bottom-2">
+                            {allPendingText}
+                        </div>
+                    )}
+                    {(isConnecting || scribe.isConnected || pendingSegments.length > 0) && (
+                        <div className="pointer-events-auto rounded-lg overflow-hidden">
+                            <TranscriptInput
+                                isConnected={scribe.isConnected}
+                                isConnecting={isConnecting}
+                                onToggle={handleToggleActive}
+                                error={scribeError}
+                                onCommit={handleManualCommit}
+                                onDiscard={handleDiscard}
+                                pendingCount={pendingSegments.length}
+                            />
+                        </div>
+                    )}
+                </div>
             </div>
 
             <Sidebar side="right" variant="floating">
                 <SidebarContent className="p-2">
-                    <SidebarGroupLabel>Record vocals</SidebarGroupLabel>
-                    <TranscriptInput
-                        isConnected={scribe.isConnected}
-                        isConnecting={isConnecting}
-                        onToggle={handleToggleActive}
-                        error={scribeError}
-                    />
-                    <SidebarGroupLabel className="mt-5">Tools</SidebarGroupLabel>
+                    <SidebarGroupLabel>Toolbar</SidebarGroupLabel>
                     <Empty className="bg-muted border p-2">
                         <EmptyHeader>
                             <EmptyMedia variant="icon" className="bg-background border">
-                                <ToolboxIcon />
+                                {isFormatting ? <Loader className="animate-spin size-5" /> : <ToolboxIcon />}
                             </EmptyMedia>
                             <EmptyTitle>Select a tool</EmptyTitle>
                             <EmptyDescription className="w-full">
-                                Choose a tool to get started.
+                                Manual choose a tool.
                             </EmptyDescription>
                         </EmptyHeader>
                         <EmptyContent>
-                            <NativeSelect className="w-[95%]">
+                            <NativeSelect
+                                className="w-[95%]"
+                                value={selectedTool}
+                                onChange={handleToolSelect}
+                                disabled={isFormatting || !hasContent}
+                            >
                                 <NativeSelectOption value="">Choose a tool</NativeSelectOption>
                                 <NativeSelectOption value="format">Format</NativeSelectOption>
                                 <NativeSelectOption value="summarize">Summarize</NativeSelectOption>
+                                <NativeSelectOption value="create_flowchart">Create Flowchart</NativeSelectOption>
                             </NativeSelect>
+                            {selectedTool && (
+                                <Button
+                                    className="w-[95%] mt-2"
+                                    onClick={runTool}
+                                    disabled={isFormatting || !hasContent}
+                                >
+                                    {isFormatting ? <Loader className="animate-spin size-5" /> : "Run"}
+                                </Button>
+                            )}
                         </EmptyContent>
                     </Empty>
+
+                    <ConversationBar
+                        agentId={process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID || ""}
+                        onToolCall={async (toolName) => {
+                            if (toolName === "recording") {
+                                setTimeout(() => {
+                                    handleToggleActive();
+                                }, 500);
+                                return "Starting recording.";
+                            }
+
+                            if (toolName === "create_flowchart") {
+                                if (hasFlowchart) {
+                                    alert("Flowchart already exists! Redirecting to view...");
+                                    router.push(`/dashboard/file/${fileId}/flowchart`);
+                                    return "Flowchart already generated, redirecting you to it.";
+                                }
+
+                                const text = editor.children
+                                    .map((n: any) => n.children?.map((c: any) => c.text).join('') || '')
+                                    .join('\n');
+                                if (!text.trim()) return "Document is empty.";
+
+                                setIsFormatting(true);
+                                try {
+                                    const res = await fetch("/api/ai/flowchart", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({ text }),
+                                    });
+                                    if (!res.ok) throw new Error("API Failed");
+                                    const data = await res.json();
+
+                                    if (data.nodes && data.edges) {
+                                        // Save to localstorage
+                                        try {
+                                            const stored = localStorage.getItem('files');
+                                            if (stored) {
+                                                const files = JSON.parse(stored);
+                                                // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                                                const updatedFiles = files.map((f: any) =>
+                                                    f.id === fileId ? { ...f, flowchart: data } : f
+                                                );
+                                                localStorage.setItem('files', JSON.stringify(updatedFiles));
+                                            }
+                                        } catch (e) { console.error(e); }
+
+                                        router.push(`/dashboard/file/${fileId}/flowchart`);
+                                        return "Flowchart created. Opening now.";
+                                    }
+                                    return "Failed to generate flowchart.";
+                                } catch (e) {
+                                    return "Error creating flowchart.";
+                                } finally {
+                                    setIsFormatting(false);
+                                }
+                            }
+
+                            if (toolName !== "format" && toolName !== "summarize") return "Tool not found";
+
+                            const text = editor.children
+                                .map((n: any) => n.children?.map((c: any) => c.text).join('') || '')
+                                .join('\n');
+
+                            if (!text.trim()) return "Document is empty.";
+
+                            setIsFormatting(true);
+                            try {
+                                const endpoint = toolName === "format" ? "/api/ai/format" : "/api/ai/summarize";
+                                const res = await fetch(endpoint, {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ text }),
+                                });
+
+                                if (!res.ok) throw new Error("API Failed");
+                                const data = await res.json();
+                                if (data && Array.isArray(data)) {
+                                    editor.withoutNormalizing(() => {
+                                        editor.selection = null;
+                                        editor.children = data;
+                                        editor.onChange();
+                                    });
+                                    saveToFile(data);
+                                    setHasContent(checkHasContent(data));
+                                    setToolHistory(prev => [{
+                                        id: Date.now().toString(),
+                                        tool: toolName as "format" | "summarize",
+                                        timestamp: new Date(),
+                                    }, ...prev]);
+                                    return "Success. Content updated.";
+                                }
+                                return "Failed to process data.";
+                            } catch (e) {
+                                console.error(e);
+                                return "Error occurred.";
+                            } finally {
+                                setIsFormatting(false);
+                            }
+                        }}
+                    />
                 </SidebarContent>
             </Sidebar>
         </div>
@@ -266,6 +526,8 @@ export default function FilePage() {
 
     const [isLoading, setIsLoading] = useState(true);
     const [fileContent, setFileContent] = useState<Value>(initialEmptyValue);
+    const [hasFlowchart, setHasFlowchart] = useState(false);
+    const [fileTitle, setFileTitle] = useState("Untitled");
 
     useEffect(() => {
         if (!fileId) return;
@@ -276,8 +538,10 @@ export default function FilePage() {
                 const files = JSON.parse(stored);
                 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
                 const file = files.find((f: any) => f.id === fileId);
-                if (file && file.content) {
-                    setFileContent(file.content);
+                if (file) {
+                    if (file.content) setFileContent(file.content);
+                    if (file.flowchart) setHasFlowchart(true);
+                    if (file.fileName) setFileTitle(file.fileName);
                 }
             }
         } catch (e) {
@@ -295,5 +559,5 @@ export default function FilePage() {
         );
     }
 
-    return <FileEditorInner initialContent={fileContent} fileId={fileId} />;
+    return <FileEditorInner initialContent={fileContent} fileId={fileId} initialHasFlowchart={hasFlowchart} fileTitle={fileTitle} />;
 }

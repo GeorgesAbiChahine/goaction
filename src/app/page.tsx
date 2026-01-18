@@ -15,7 +15,7 @@ export default async function Page() {
 
   if (!session) {
     return <div>
-      <div className="text-4xl pb-5 text-center font-(family-name:--font-instrument-serif)">goAction</div>
+      <div className="text-4xl pb-5 text-center font-(family-name:--font-instrument-serif)">vectra</div>
       <Card className="max-w-md w-[320px]">
         <CardHeader>
           <CardTitle className="text-center">Welcome, Log in or Sign Up</CardTitle>
