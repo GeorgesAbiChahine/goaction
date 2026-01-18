@@ -21,7 +21,6 @@ export function VoiceAgent({ onToolCall, agentId = process.env.NEXT_PUBLIC_ELEVE
             setStatus("idle");
         },
         onModeChange: (mode) => {
-            // mode.mode is 'speaking' or 'listening'
         },
         onClientToolCall: async ({ toolName, parameters }: { toolName: string; parameters: any }) => {
             console.log("Agent requested tool:", toolName);
@@ -45,7 +44,6 @@ export function VoiceAgent({ onToolCall, agentId = process.env.NEXT_PUBLIC_ELEVE
             }
             setStatus("connecting");
             try {
-                // Request microphone permission explicitly if needed, though SDK handles it.
                 // @ts-ignore
                 // @ts-ignore
                 await conversation.startSession({

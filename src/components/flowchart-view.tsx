@@ -37,9 +37,7 @@ function CustomNode({ data }: { data: { title: string; label: string } }) {
     )
 }
 
-// Auto layout helper
 const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = "LR") => {
-    // Check if nodes already have positions (not 0,0)
     const hasPositions = nodes.some(n => n.position.x !== 0 || n.position.y !== 0)
     if (hasPositions) {
         return { nodes, edges }
@@ -52,7 +50,7 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = "LR") => 
 
     nodes.forEach((node) => {
         dagreGraph.setNode(node.id, { width: 350, height: 200 })
-        node.type = 'card' // Force custom type
+        node.type = 'card'
     })
 
     edges.forEach((edge) => {
@@ -96,7 +94,6 @@ export function FlowchartView({ initialNodes, initialEdges, className, onSave }:
     const [nodes, setNodes, onNodesChange] = useNodesState(layoutedNodes)
     const [edges, setEdges, onEdgesChange] = useEdgesState(layoutedEdges)
 
-    // Sync state if props change deeply
     React.useEffect(() => {
         const { nodes: newNodes, edges: newEdges } = getLayoutedElements(initialNodes, initialEdges)
         setNodes(newNodes)

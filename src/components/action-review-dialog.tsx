@@ -33,15 +33,8 @@ export function ActionReviewDialog({ open, onOpenChange, actions: initialActions
     const [actions, setActions] = useState<ActionItem[]>(initialActions)
     const [loading, setLoading] = useState(false)
 
-    // Reset actions when dialog opens
-    // Note: In a real app we might want to use useEffect to sync with props
-    // but for now we assume the parent handles the state refresh or we initialize on mount.
-    // Better: use a derived state or effect if props change.
-    // Let's assume initialActions changes when the dialog re-opens with new data.
+  
     if (initialActions !== actions && !loading && open) {
-        // Simple sync for now, though this might cause loop if not careful.
-        // Actually, let's just use initialActions as the source of truth if we don't support editing here.
-        // If we support removing, we need local state.
     }
 
     const handleRemove = (index: number) => {
@@ -53,22 +46,6 @@ export function ActionReviewDialog({ open, onOpenChange, actions: initialActions
     useEffect(() => {
         setActions(initialActions)
     }, [initialActions])
-    // We will just use the props directly for now to avoid complexity, 
-    // assuming the parent passes the correct list. 
-    // Wait, if user wants to delete, we need local state.
-    // Let's implement the useEffect sync.
-
-    // Actually, hooks cannot be conditional.
-    // Let's rely on the parent or just set local state on render if we switched ID.
-    // For simplicity, let's assume the parent passes a fresh array reference.
-
-    // Let's fix the sync manually:
-    // We will use a key on the component in the parent to force reset, or just useEffect.
-    /*
-    useEffect(() => {
-        setActions(initialActions)
-    }, [initialActions])
-    */
 
     const handleConfirm = async () => {
         setLoading(true)
