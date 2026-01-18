@@ -45,6 +45,7 @@ export default function File() {
     const [scribeError, setScribeError] = useState<string | null>(null);
     const committedCountRef = useRef(0);
     const lastCapturedPartialRef = useRef<string | null>(null);
+    const recordingCounterRef = useRef(1);
 
     // Store transcripts locally until manually committed
     // We store the full segment objects to preserve speaker_id if available
@@ -107,8 +108,6 @@ export default function File() {
                     noiseSuppression: true,
                 },
                 includeTimestamps: true,
-                // @ts-ignore
-                diarize: true,
             });
 
             // Start with current length (even if stale) to avoid re-adding old segments.
@@ -147,55 +146,28 @@ export default function File() {
 
         const slateEditor = editor as any;
 
-        // Group by speaker
-        // Structure: list of { speaker: string, text: string }
-        const groups: { speaker: string, text: string }[] = [];
+        // Combine all pending segments into one block of text
+        const fullText = pendingSegments
+            .map(s => s.text)
+            .filter(t => t && t.trim())
+            .join(' ');
 
-        pendingSegments.forEach(segment => {
-            // Note: ElevenLabs Scribe V2 realtime segments might have words with speaker_id
-            // But segment itself often has 'text'.
-            // If words are available, we check the first word for speaker?
-            // Or use segment level if available. 
-            // The provided code snippet earlier suggested mapping words.
+        if (!fullText) return;
 
-            // Heuristic: Check segment words for speaker_id.
-            let speaker = "Unknown";
-            if (segment.words && segment.words.length > 0) {
-                // Find most frequent speaker or just first
-                const firstWord = segment.words[0];
-                if (firstWord.speaker_id) speaker = firstWord.speaker_id;
-            }
+        const currentCount = recordingCounterRef.current;
+        recordingCounterRef.current += 1;
 
-            // Clean text
-            const text = segment.text || "";
-            if (!text.trim()) return;
-
-            // Merge with previous if same speaker
-            if (groups.length > 0 && groups[groups.length - 1].speaker === speaker) {
-                groups[groups.length - 1].text += " " + text;
-            } else {
-                groups.push({ speaker, text });
-            }
-        });
-
-        // Insert into editor as paragraphs
-        // We use withoutNormalizing to insert multiple blocks if needed
+        // Insert into editor as a single paragraph
         if (slateEditor.withoutNormalizing) {
             slateEditor.withoutNormalizing(() => {
-                groups.forEach(group => {
-                    // Create a new paragraph node
-                    const node = {
-                        type: 'p',
-                        children: [{ text: `[${group.speaker}]: ${group.text}` }],
-                    };
+                const node = {
+                    type: 'p',
+                    children: [{ text: `[Recording ${currentCount}]: ${fullText}` }],
+                };
 
-                    // Insert node. If using insertNodes, it inserts at selection.
-                    // If we want to append, we might need to select end first.
-                    // Let's just insertAt selection for now.
-                    if (slateEditor.insertNodes) {
-                        slateEditor.insertNodes(node);
-                    }
-                });
+                if (slateEditor.insertNodes) {
+                    slateEditor.insertNodes(node);
+                }
             });
         }
 
