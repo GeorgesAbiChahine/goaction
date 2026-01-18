@@ -1,114 +1,51 @@
-# Tauri 2.0 + Next.js 16 App Router Template
+## Inspiration
 
-![Tauri window screenshot](public/tauri-nextjs-template-2_screenshot.png)
+As a team, we have all been there: startup pitches where follow-ups slip through the cracks, classroom lectures with too much to absorb, meeting discussions where action items get lost before they ever reach a to-do list. In the heat of the moment, **conversations vanish**. Whether you are networking, brainstorming, or learning, too many crucial tasks, insights, and meetings are scheduled too late or omitted entirely.
 
-This is a [Tauri](https://v2.tauri.app/) project template using [Next.js](https://nextjs.org/),
-bootstrapped by combining [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app)
-and [`create tauri-app`](https://v2.tauri.app/start/create-project/).
+So this weekend, we asked ourselves one simple question: **What if your conversations could do the work for you?**
 
-This template uses [`pnpm`](https://pnpm.io/) as the Node.js dependency
-manager, and uses the [App Router](https://nextjs.org/docs/app) model for Next.js.
+That is how goAction was born. It's a second brain that listens, captures, and transforms your spoken moments into structured, actionable outcomes. No more forgotten promises, no more missed deadlines, no more scrambling to remember what was said.
 
-## Template Features
+## What It Does
 
-- TypeScript frontend using [Next.js 16](https://nextjs.org/) React framework
-- [TailwindCSS 4](https://tailwindcss.com/) as a utility-first atomic CSS framework
-  - The example page in this template app has been updated to use only TailwindCSS
-  - While not included by default, consider using
-    [React Aria components](https://react-spectrum.adobe.com/react-aria/index.html)
-    and/or [HeadlessUI components](https://headlessui.com/) for completely unstyled and
-    fully accessible UI components, which integrate nicely with TailwindCSS
-- Opinionated formatting and linting already setup and enabled
-  - [Biome](https://biomejs.dev/) for a combination of fast formatting, linting, and
-    import sorting of TypeScript code
-  - [clippy](https://github.com/rust-lang/rust-clippy) and
-    [rustfmt](https://github.com/rust-lang/rustfmt) for Rust code
-- GitHub Actions to check code formatting and linting for both TypeScript and Rust
+1. **Captures and structures your conversations in real time.** goAction listens through advanced speech-to-text, transcribes every word, and uses AI to transform messy recordings into clean, formatted documents, summaries, and visual flowcharts.
 
-## Getting Started
+2. **Turns spoken words into scheduled actions.** Action items detected in your conversations automatically flow into your calendar and task systems through Gumloop automation. No manual entry, no forgotten follow-ups.
 
-### Running development server and use Tauri window
+**Entirely hands-free.** goAction pairs with **Meta Glasses** or any mobile device for seamless, always-on microphone input. Just speak naturally and the app handles everything.
 
-After cloning for the first time, change your app identifier inside
-`src-tauri/tauri.conf.json` to your own:
+## How We Built It
 
-```jsonc
-{
-  // ...
-  // The default "com.tauri.dev" will prevent you from building in release mode
-  "identifier": "com.my-application-name.app",
-  // ...
-}
-```
+### Tech Stack
 
-To develop and run the frontend in a Tauri window:
+goAction runs on **Next.js 16** with **Tauri 2** wrapping it as a native desktop app. The frontend uses **React 19**, **TailwindCSS 4**, and **Framer Motion**. Document editing is powered by **PlateJS**, a Slate-based editor, while flowcharts use **React Flow** with **Dagre** for automatic layout.
 
-```shell
-pnpm tauri dev
-```
+All AI features run through **Google Gemini 2.5 Flash** with custom prompts engineered to output valid JSON for each feature. **ElevenLabs Scribe** handles real-time transcription with echo cancellation and noise suppression. **ElevenLabs Conversational AI** powers the voice agent, connecting via WebRTC to expose tools that users trigger through natural speech. **Gumloop** webhooks route detected action items to calendar and task systems.
 
-This will load the Next.js frontend directly in a Tauri webview window, in addition to
-starting a development server on `localhost:3000`.
-Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd> in a Chromium based WebView (e.g. on
-Windows) to open the web developer console from the Tauri window.
+### Auth0 Integration
 
-### Building for release
+**Auth0** is the authentication backbone and central to our Auth0 Sponsor Track implementation. Users authenticate through Auth0 Universal Login, with the `@auth0/nextjs-auth0` SDK handling server-side sessions and client-side user context via the `useUser` hook. The dashboard displays personalized information (avatar, name, email) and the entire route tree requires authentication. Auth0 ensures every conversation and document is tied to a verified identity, essential for privacy-sensitive voice recordings.
 
-To export the Next.js frontend via SSG and build the Tauri application for release:
+## Challenges We Ran Into
 
-```shell
-pnpm tauri build
-```
+Coordinating multiple voice streams in real time was our biggest challenge. Transcription and the voice agent both need continuous audio, and tools must execute without interrupting either. We solved this with separate WebRTC sessions, a pending-segments queue for buffered commits, and mode switching between recording and issuing commands. We had to make sure Gemini's output matches Slate's JSON schema exactly, or the editor would crash. We engineered precise prompts, sanitized responses, and used atomic batch updates.
 
-### Source structure
+## Accomplishments That We Are Proud Of
 
-Next.js frontend source files are located in `src/` and Tauri Rust application source
-files are located in `src-tauri/`. Please consult the Next.js and Tauri documentation
-respectively for questions pertaining to either technology.
+- Built a fully voice-controlled workflow where users go from recording to formatted documents to flowcharts without a single click.
+- Integrated real-time transcription, AI formatting, and visual storyboarding into one seamless, hands-free experience.
+- Shipped calendar integration through Gumloop so action items actually get scheduled, not forgotten.
 
-## Caveats
+## What We Learned
 
-### Static Site Generation / Pre-rendering
+- Making conversations actionable is as hard as the work itself; solving that problem meaningfully took more thought and iteration than we expected.
+- Gained deep understanding of the ElevenLabs ecosystem: real-time Scribe transcription alongside Conversational AI tool-calling.
+- Learned prompt engineering for structured output with temperature tuning LLMs into valid JSON for specific library schemas.
+- Understood Auth0's NextJS SDK patterns for secure session management and client-side hooks.
 
-Next.js is a great React frontend framework which supports server-side rendering (SSR)
-as well as static site generation (SSG or pre-rendering). For the purposes of creating a
-Tauri frontend, only SSG can be used since SSR requires an active Node.js server.
+## What Is Next for goAction
 
-Please read into the Next.js documentation for [Static Exports](https://nextjs.org/docs/app/building-your-application/deploying/static-exports)
-for an explanation of supported / unsupported features and caveats.
-
-### `next/image`
-
-The [`next/image` component](https://nextjs.org/docs/basic-features/image-optimization)
-is an enhancement over the regular `<img>` HTML element with server-side optimizations
-to dynamically scale the image quality. This is only supported when deploying the
-frontend onto Vercel directly, and must be disabled to properly export the frontend
-statically. As such, the
-[`unoptimized` property](https://nextjs.org/docs/api-reference/next/image#unoptimized)
-is set to true for the `next/image` component in the `next.config.js` configuration.
-This will allow the image to be served as-is, without changes to its quality, size,
-or format.
-
-### ReferenceError: window/navigator is not defined
-
-If you are using Tauri's `invoke` function or any OS related Tauri function from within
-JavaScript, you may encounter this error when importing the function in a global,
-non-browser context. This is due to the nature of Next.js' dev server effectively
-running a Node.js server for SSR and hot module replacement (HMR), and Node.js does not
-have a notion of `window` or `navigator`.
-
-The solution is to ensure that the Tauri functions are imported as late as possible
-from within a client-side React component, or via [lazy loading](https://nextjs.org/docs/app/building-your-application/optimizing/lazy-loading).
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and
-  API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-And to learn more about Tauri, take a look at the following resources:
-
-- [Tauri Documentation - Guides](https://v2.tauri.app/start/) - learn about the Tauri
-  toolkit.
+- Cloud sync with Auth0 user metadata for seamless multi-device access.
+- Team collaboration with real-time shared editing.
+- Advanced speaker analytics with sentiment analysis.
+- Launch our go-to-market strategy starting with university clubs, the corporate environment, and founder communities.
