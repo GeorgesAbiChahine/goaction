@@ -20,7 +20,7 @@ export default function TranscriptInput({
 }: TranscriptInputProps) {
 
     return (
-        <div className="p-1 bg-muted border rounded-lg flex gap-2 items-center">
+        <div className="p-1 bg-muted border rounded-lg pl-2 flex gap-2 items-center">
             <LiveWaveform
                 active={isConnected}
                 processing={isConnecting}

@@ -13,13 +13,26 @@ import {
     ItalicPlugin,
     UnderlinePlugin
 } from '@platejs/basic-nodes/react';
-import { Loader } from 'lucide-react';
+import { Loader, ToolboxIcon } from 'lucide-react';
 import { useParams } from "next/navigation";
 import { Value } from 'platejs';
 import { usePlateEditor } from 'platejs/react';
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Editor from "./editor";
 import TranscriptInput from "./transcript-input";
+import {
+    Empty,
+    EmptyContent,
+    EmptyDescription,
+    EmptyHeader,
+    EmptyMedia,
+    EmptyTitle,
+} from "@/components/ui/empty"
+import { Button } from '@/components/ui/button';
+import {
+    NativeSelect,
+    NativeSelectOption,
+} from "@/components/ui/native-select"
 
 const initialEmptyValue: Value = [
     {
@@ -61,7 +74,31 @@ function FileEditorInner({ initialContent, fileId }: { initialContent: Value, fi
     const [scribeError, setScribeError] = useState<string | null>(null);
     const committedCountRef = useRef(0);
     const lastCapturedPartialRef = useRef<string | null>(null);
-    const recordingCounterRef = useRef(1);
+
+    const initialCounter = useMemo(() => {
+        let max = 0;
+        const regex = /\[Recording (\d+)\]:/;
+
+        const scanNodes = (nodes: any[]) => {
+            for (const node of nodes) {
+                if (node.text) {
+                    const match = node.text.match(regex);
+                    if (match) {
+                        const num = parseInt(match[1], 10);
+                        if (!isNaN(num) && num > max) max = num;
+                    }
+                }
+                if (node.children) {
+                    scanNodes(node.children);
+                }
+            }
+        };
+
+        scanNodes(initialContent);
+        return max + 1;
+    }, [initialContent]);
+
+    const recordingCounterRef = useRef(initialCounter);
 
     const [pendingSegments, setPendingSegments] = useState<any[]>([]);
 
@@ -190,7 +227,7 @@ function FileEditorInner({ initialContent, fileId }: { initialContent: Value, fi
 
             <Sidebar side="right" variant="floating">
                 <SidebarContent className="p-2">
-                    <SidebarGroupLabel>Voice recording</SidebarGroupLabel>
+                    <SidebarGroupLabel>Record vocals</SidebarGroupLabel>
                     <TranscriptInput
                         isConnected={scribe.isConnected}
                         isConnecting={isConnecting}
@@ -198,6 +235,24 @@ function FileEditorInner({ initialContent, fileId }: { initialContent: Value, fi
                         error={scribeError}
                     />
                     <SidebarGroupLabel className="mt-5">Tools</SidebarGroupLabel>
+                    <Empty className="bg-muted border p-2">
+                        <EmptyHeader>
+                            <EmptyMedia variant="icon" className="bg-background border">
+                                <ToolboxIcon />
+                            </EmptyMedia>
+                            <EmptyTitle>Select a tool</EmptyTitle>
+                            <EmptyDescription className="w-full">
+                                Choose a tool to get started.
+                            </EmptyDescription>
+                        </EmptyHeader>
+                        <EmptyContent>
+                            <NativeSelect className="w-[95%]">
+                                <NativeSelectOption value="">Choose a tool</NativeSelectOption>
+                                <NativeSelectOption value="format">Format</NativeSelectOption>
+                                <NativeSelectOption value="summarize">Summarize</NativeSelectOption>
+                            </NativeSelect>
+                        </EmptyContent>
+                    </Empty>
                 </SidebarContent>
             </Sidebar>
         </div>
