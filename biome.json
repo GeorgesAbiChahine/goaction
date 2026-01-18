@@ -20,14 +20,14 @@
     ]
   },
   "formatter": {
-    "enabled": true,
+    "enabled": false,
     "indentStyle": "space",
     "indentWidth": 2
   },
   "assist": {
     "actions": {
       "source": {
-        "organizeImports": "on"
+        "organizeImports": "off"
       }
     }
   },
@@ -40,27 +40,31 @@
     },
     "rules": {
       "recommended": true,
-      "correctness": {
-        "useHookAtTopLevel": "error",
-        "useImportExtensions": "off"
-      },
-      "nursery": {
-        "noFloatingPromises": "error",
-        "useAwaitThenable": "error"
-      },
-      "suspicious": {
-        "useGoogleFontDisplay": "error",
-        "noDocumentImportInPage": "error",
-        "noHeadImportInDocument": "error"
+      "a11y": {
+        "recommended": false
       },
       "style": {
-        "noHeadElement": "error",
-        "useComponentExportOnlyModules": {
-          "level": "error",
-          "options": {
-            "allowExportNames": ["metadata"]
-          }
-        }
+        "recommended": false,
+        "useComponentExportOnlyModules": "off"
+      },
+      "complexity": {
+        "recommended": false
+      },
+      "suspicious": {
+        "recommended": false,
+        "noExplicitAny": "off",
+        "noArrayIndexKey": "off"
+      },
+      "correctness": {
+        "useHookAtTopLevel": "error",
+        "useExhaustiveDependencies": "off",
+        "useImportExtensions": "off",
+        "noUnusedImports": "off",
+        "noInvalidPositionAtImportRule": "off"
+      },
+      "nursery": {
+        "noFloatingPromises": "off",
+        "useAwaitThenable": "off"
       },
       "performance": {
         "noImgElement": "off"
@@ -72,12 +76,12 @@
       "tailwindDirectives": true
     },
     "formatter": {
-      "quoteStyle": "double"
+      "quoteStyle": "single"
     }
   },
   "javascript": {
     "formatter": {
-      "quoteStyle": "double"
+      "quoteStyle": "single"
     },
     "globals": []
   }

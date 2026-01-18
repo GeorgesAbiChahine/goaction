@@ -1,5 +1,4 @@
 import LoginButton from "@/components/login-button";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -12,7 +11,6 @@ import { redirect } from "next/navigation";
 
 
 export default async function Page() {
-  // biome-ignore lint/nursery/useAwaitThenable: auth0.getSession() in recent SDKs returns a Promise
   const session = await auth0.getSession();
 
   if (!session) {

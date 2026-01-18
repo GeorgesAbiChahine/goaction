@@ -18,6 +18,8 @@
   "dependencies": {
     "@auth0/nextjs-auth0": "^4.14.0",
     "@base-ui/react": "^1.1.0",
+    "@elevenlabs/elevenlabs-js": "^2.31.0",
+    "@elevenlabs/react": "^0.13.0",
     "@platejs/basic-nodes": "^52.0.11",
     "@radix-ui/react-toolbar": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
