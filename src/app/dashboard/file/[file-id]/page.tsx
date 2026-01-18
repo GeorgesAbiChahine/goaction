@@ -13,20 +13,37 @@ import {
     ItalicPlugin,
     UnderlinePlugin
 } from '@platejs/basic-nodes/react';
+import { Loader } from 'lucide-react';
+import { useParams } from "next/navigation";
 import { Value } from 'platejs';
 import { usePlateEditor } from 'platejs/react';
 import { useEffect, useRef, useState } from "react";
 import Editor from "./editor";
 import TranscriptInput from "./transcript-input";
 
-const initialValue: Value = [
+const initialEmptyValue: Value = [
     {
         type: 'p',
         children: [{ text: '' }],
     },
 ];
 
-export default function File() {
+function FileEditorInner({ initialContent, fileId }: { initialContent: Value, fileId: string }) {
+    const saveToFile = (newValue: Value) => {
+        try {
+            const stored = localStorage.getItem('files');
+            if (stored) {
+                const files = JSON.parse(stored);
+                const updatedFiles = files.map((f: any) =>
+                    f.id === fileId ? { ...f, content: newValue } : f
+                );
+                localStorage.setItem('files', JSON.stringify(updatedFiles));
+            }
+        } catch (e) {
+            console.error("Auto-save failed", e);
+        }
+    };
+
     const editor = usePlateEditor({
         plugins: [
             BoldPlugin,
@@ -37,18 +54,15 @@ export default function File() {
             H3Plugin.withComponent(H3Element),
             BlockquotePlugin.withComponent(BlockquoteElement),
         ],
-        value: initialValue,
+        value: initialContent,
     });
 
-    // --- SCRIBE LOGIC ---
     const [isConnecting, setIsConnecting] = useState(false);
     const [scribeError, setScribeError] = useState<string | null>(null);
     const committedCountRef = useRef(0);
     const lastCapturedPartialRef = useRef<string | null>(null);
     const recordingCounterRef = useRef(1);
 
-    // Store transcripts locally until manually committed
-    // We store the full segment objects to preserve speaker_id if available
     const [pendingSegments, setPendingSegments] = useState<any[]>([]);
 
     const scribe = useScribe({
@@ -63,12 +77,11 @@ export default function File() {
 
     const handleToggleActive = async () => {
         if (scribe.isConnected) {
-            // [NEW] If there's a partial transcript hanging, capture it before disconnecting
             if (scribe.partialTranscript && scribe.partialTranscript.trim().length > 0) {
                 const partialSegment = {
                     text: scribe.partialTranscript,
-                    words: [], // Partials usually don't have word-level timings yet
-                    speaker_id: "Unknown" // We might not know speaker for partial
+                    words: [],
+                    speaker_id: "Unknown"
                 };
                 setPendingSegments(prev => [...prev, partialSegment]);
                 lastCapturedPartialRef.current = scribe.partialTranscript;
@@ -87,33 +100,23 @@ export default function File() {
             const response = await fetch("/api/scribe-token");
             if (!response.ok) {
                 const errData = await response.json().catch(() => ({}));
-                throw new Error(
-                    errData.details ||
-                    errData.error ||
-                    `Token fetch failed: ${response.statusText}`,
-                );
+                throw new Error(errData.details || errData.error || `Token fetch failed`);
             }
             const data = await response.json();
             if (!data.token) throw new Error("No token received");
 
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            if (!navigator.mediaDevices || navigator.mediaDevices.getUserMedia === undefined) {
                 throw new Error("Microphone access is not supported.");
             }
 
             await scribe.connect({
                 token: data.token,
                 languageCode: "en",
-                microphone: {
-                    echoCancellation: true,
-                    noiseSuppression: true,
-                },
+                microphone: { echoCancellation: true, noiseSuppression: true },
                 includeTimestamps: true,
             });
 
-            // Start with current length (even if stale) to avoid re-adding old segments.
-            // When Scribe Connects/Resets, length will drop to 0, and our useEffect will catch that.
             committedCountRef.current = scribe.committedTranscripts.length;
-            // Clear pending segments for a fresh session
             setPendingSegments([]);
 
         } catch (err: unknown) {
@@ -124,18 +127,13 @@ export default function File() {
         }
     };
 
-    // Accumulate committed transcripts instead of auto-inserting
     useEffect(() => {
-        // Handle Session Reset: If the SDK clears transcripts (length drops), reset our counter.
         if (scribe.committedTranscripts.length < committedCountRef.current) {
             committedCountRef.current = scribe.committedTranscripts.length;
             return;
         }
-
-        console.log("Scribe update:", scribe.committedTranscripts.length, "committed items");
         if (scribe.committedTranscripts.length > committedCountRef.current) {
             const newSegments = scribe.committedTranscripts.slice(committedCountRef.current);
-            console.log("New segments found:", newSegments);
             setPendingSegments(prev => [...prev, ...newSegments]);
             committedCountRef.current = scribe.committedTranscripts.length;
         }
@@ -145,41 +143,28 @@ export default function File() {
         if (pendingSegments.length === 0) return;
 
         const slateEditor = editor as any;
+        const fullText = pendingSegments.map(s => s.text).filter(Boolean).join(' ');
 
-        // Combine all pending segments into one block of text
-        const fullText = pendingSegments
-            .map(s => s.text)
-            .filter(t => t && t.trim())
-            .join(' ');
-
-        if (!fullText) return;
+        if (!fullText.trim()) return;
 
         const currentCount = recordingCounterRef.current;
         recordingCounterRef.current += 1;
 
-        // Insert into editor as a single paragraph
         if (slateEditor.withoutNormalizing) {
             slateEditor.withoutNormalizing(() => {
                 const node = {
                     type: 'p',
                     children: [{ text: `[Recording ${currentCount}]: ${fullText}` }],
                 };
-
                 if (slateEditor.insertNodes) {
                     slateEditor.insertNodes(node);
                 }
             });
         }
-
-        // Clear pending
         setPendingSegments([]);
     };
 
-    // Combine all pending text for the overlay
-    // Only include partialTranscript if connected AND it's not the stale one we just captured.
-    const showPartial = scribe.isConnected &&
-        scribe.partialTranscript &&
-        scribe.partialTranscript !== lastCapturedPartialRef.current;
+    const showPartial = scribe.isConnected && scribe.partialTranscript && scribe.partialTranscript !== lastCapturedPartialRef.current;
 
     const allPendingText = [
         ...pendingSegments.map(s => s.text),
@@ -193,10 +178,11 @@ export default function File() {
                     editor={editor}
                     onCommit={handleManualCommit}
                     pendingCount={pendingSegments.length}
+                    onChange={({ value }: { value: Value }) => saveToFile(value)}
                 />
 
                 {allPendingText && (
-                    <div className="absolute bottom-5 left-1/2 font-medium transform -translate-x-1/2 bg-accent text-primary px-4 py-2 rounded-lg text-base pointer-events-none z-50 animate-in fade-in slide-in-from-bottom-2 max-w-[80%] text-center">
+                    <div className="absolute bottom-5 left-1/2 font-medium transform -translate-x-1/2 bg-accent text-primary px-4 py-2 rounded-lg text-base pointer-events-none z-50 animate-in fade-in slide-in-from-bottom-2 max-w-full text-center">
                         {allPendingText}
                     </div>
                 )}
@@ -211,9 +197,48 @@ export default function File() {
                         onToggle={handleToggleActive}
                         error={scribeError}
                     />
-
+                    <SidebarGroupLabel className="mt-5">Tools</SidebarGroupLabel>
                 </SidebarContent>
             </Sidebar>
         </div>
-    )
+    );
+}
+
+export default function FilePage() {
+    const params = useParams();
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    const fileId = Array.isArray(params?.['file-id']) ? params['file-id'][0] : params?.['file-id'] as any;
+
+    const [isLoading, setIsLoading] = useState(true);
+    const [fileContent, setFileContent] = useState<Value>(initialEmptyValue);
+
+    useEffect(() => {
+        if (!fileId) return;
+
+        try {
+            const stored = localStorage.getItem('files');
+            if (stored) {
+                const files = JSON.parse(stored);
+                // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                const file = files.find((f: any) => f.id === fileId);
+                if (file && file.content) {
+                    setFileContent(file.content);
+                }
+            }
+        } catch (e) {
+            console.error("Failed to load file", e);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [fileId]);
+
+    if (isLoading || !fileId) {
+        return (
+            <div className="flex h-full items-center justify-center">
+                <Loader className="animate-spin size-5 text-muted-foreground/60" />
+            </div>
+        );
+    }
+
+    return <FileEditorInner initialContent={fileContent} fileId={fileId} />;
 }

@@ -10,7 +10,6 @@ interface TranscriptInputProps {
     isConnecting: boolean;
     onToggle: () => void;
     error: string | null;
-    // We don't need editor prop here anymore, but keeping interface clean
 }
 
 export default function TranscriptInput({
