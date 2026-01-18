@@ -11,7 +11,6 @@ export async function startGumloop(payload: any) {
     throw new Error("Missing GUMLOOP_WEBHOOK env var");
   }
   
-  // Note: apiKey might not be strictly required by webhook depending on config, but good to have
   if (!apiKey) {
      console.warn("Missing GUMLOOP_API_KEY env var");
   }
@@ -29,8 +28,7 @@ export async function startGumloop(payload: any) {
 
   if (!resp.ok) {
       const errText = await resp.text();
-      console.error(`Gumloop API error: ${resp.status} ${resp.statusText}`, errText);
-      // We should probably throw here to let the caller handle it or return a response that indicates failure
+      console.error(`Gumloop API error:`, errText);
   }
 
   return resp;

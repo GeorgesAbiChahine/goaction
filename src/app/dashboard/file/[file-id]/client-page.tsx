@@ -52,7 +52,7 @@ interface ToolHistoryItem {
 function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitle }: { initialContent: Value, fileId: string, initialHasFlowchart: boolean, fileTitle: string }) {
 
     const router = useRouter();
-    const [hasFlowchart, setHasFlowchart] = useState(initialHasFlowchart); // Check logic
+    const [hasFlowchart, setHasFlowchart] = useState(initialHasFlowchart);
 
     const saveToFile = (newValue: Value) => {
         try {
@@ -144,7 +144,6 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
     // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
     useEffect(() => {
         const handler = (event: PromiseRejectionEvent) => {
-            // Masking error as requested
             event.preventDefault();
         };
         window.addEventListener("unhandledrejection", handler);
@@ -179,10 +178,10 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
                 throw new Error(errData.details || errData.error || `Token fetch failed`);
             }
             const data = await response.json();
-            if (!data.token) throw new Error("No token received");
+            if (!data.token) throw new Error("token not received");
 
             if (!navigator.mediaDevices || navigator.mediaDevices.getUserMedia === undefined) {
-                throw new Error("Microphone access is not supported.");
+                throw new Error("Microphone access not supported.");
             }
 
             await scribe.connect({
@@ -196,7 +195,7 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
             setPendingSegments([]);
 
         } catch (err: unknown) {
-            console.error("Connection failed caught:", err);
+            console.error("Connection failed:", err);
             let errorMessage = "Connection failed";
             try {
                 if (err instanceof Error) {
@@ -206,12 +205,12 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
                     if ("message" in err) errorMessage = String((err as any).message);
                     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
                     else if ("type" in err) errorMessage = `Connection error: ${(err as any).type}`;
-                    else errorMessage = "Connection failed (unknown object)";
+                    else errorMessage = "Connection failed";
                 } else {
                     errorMessage = String(err);
                 }
             } catch (e) {
-                errorMessage = "Error parsing connection error";
+                errorMessage = "Parsing connection error";
             }
             setScribeError(errorMessage);
         } finally {
@@ -348,7 +347,7 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
 
                 if (data.actions && Array.isArray(data.actions)) {
                     if (data.actions.length === 0) {
-                        alert("No actions found in document.");
+                        alert("No actions found.");
                     } else {
                         setReviewActions(data.actions);
                     }
@@ -366,7 +365,7 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
 
                 if (!res.ok) {
                     const errData = await res.json().catch(() => ({}));
-                    throw new Error(errData.error || `${tool === "format" ? "Formatting" : "Summarization"} failed`);
+                    throw new Error(errData.error || `${tool} failed`);
                 }
                 const data = await res.json();
 
@@ -521,7 +520,6 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
                                     const data = await res.json();
 
                                     if (data.nodes && data.edges) {
-                                        // Save to localstorage
                                         try {
                                             const stored = localStorage.getItem('files');
                                             if (stored) {

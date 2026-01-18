@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     const resp = await startGumloop(body);
     
     if (!resp.ok) {
-        console.error("Gumloop backend failed:", resp.status, await resp.text().catch(() => "No body"));
+        console.error("Gumloop backend failed:", resp.status);
     }
 
     const contentType = resp.headers.get("content-type") || "application/json";
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     return new Response(text, { status: resp.status, headers: { "Content-Type": contentType } });
   } catch (err: any) {
     return new Response(
-      JSON.stringify({ error: err?.message || "Unhandled error" }),
+      JSON.stringify({ error: err?.message || "error" }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }

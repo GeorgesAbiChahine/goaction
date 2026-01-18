@@ -8,7 +8,7 @@ export async function GET() {
   if (!apiKey) {
     console.error("ELEVENLABS_API_KEY is not set in environment.");
     return NextResponse.json(
-      { error: "Server misconfiguration: ELEVENLABS_API_KEY is missing" },
+      { error: "ELEVENLABS_API_KEY is missing" },
       { status: 500 },
     );
   }
@@ -21,12 +21,11 @@ export async function GET() {
     const token = tokenData.token || tokenData;
 
     if (typeof token !== "string") {
-      throw new Error("Unexpected token format from SDK");
+      throw new Error("Unexpected token");
     }
 
     return NextResponse.json({ token });
   } catch (error) {
-    console.error("Failed to fetch token from ElevenLabs:", error);
     return NextResponse.json(
       {
         error: "Failed to fetch token",

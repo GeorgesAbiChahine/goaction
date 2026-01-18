@@ -4,11 +4,9 @@ import { buildSummarizePrompt } from "@/lib/ai/summarizePrompt";
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Helper to get keys - in a real app these should be guarded/proxied
 const getGeminiKey = () => process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY || "";
 const getElevenLabsKey = () => process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY || process.env.ELEVENLABS_API_KEY || "";
 
-// Initialize Gemini
 const getGeminiModel = (modelName = "gemini-2.5-flash-lite") => {
     const apiKey = getGeminiKey();
     if (!apiKey) throw new Error("Missing Gemini API Key. Please set NEXT_PUBLIC_GEMINI_API_KEY.");
@@ -22,9 +20,6 @@ export async function getScribeToken() {
 
     try {
         const client = new ElevenLabsClient({ apiKey });
-        // Note: Creating a token usually requires a secret key. 
-        // If this fails in browser due to CORS or security, the user must use a proxy.
-        // For local Tauri apps, this might work if the SDK allows browser usage with apiKey.
         const response = await client.tokens.singleUse.create("realtime_scribe");
         // biome-ignore lint/suspicious/noExplicitAny: <explanation>
         const tokenData = response as any;
@@ -88,13 +83,13 @@ export async function generateFlowchartData(text: string) {
     try {
         return JSON.parse(textResponse);
     } catch (e) {
-        console.error("Failed to parse flowchart response", e);
-        throw new Error("Failed to generate valid flow data");
+        console.error("Failed", e);
+        throw new Error("Failed to generate");
     }
 }
 
 export async function summarizeText(text: string) {
-    if (!text) throw new Error("No text provided");
+    if (!text) throw new Error("No text");
     
     const model = getGeminiModel();
     const prompt = buildSummarizePrompt(text);
@@ -106,7 +101,7 @@ export async function summarizeText(text: string) {
 }
 
 export async function formatText(text: string) {
-    if (!text) throw new Error("No text provided");
+    if (!text) throw new Error("No text");
     
     const model = getGeminiModel();
     const prompt = buildPlatePrompt(text);

@@ -29,7 +29,7 @@ const Files = () => {
       try {
         setFiles(JSON.parse(stored));
       } catch (e) {
-        console.error("Failed to parse files", e);
+        console.error("Parse files error", e);
       }
     }
   };
