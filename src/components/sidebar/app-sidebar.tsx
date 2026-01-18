@@ -49,7 +49,7 @@ export function DashboardSidebar() {
             <div className="text-2xl text-center my-auto font-(family-name:--font-instrument-serif)">goAction</div>
           )
             :
-            <div className="text-2xl size-8 flex justify-center items-center text-center my-auto font-(family-name:--font-instrument-serif)">V</div>
+            <div className="text-2xl size-8 flex justify-center items-center text-center my-auto font-(family-name:--font-instrument-serif)">gA</div>
 
           }
         </a>

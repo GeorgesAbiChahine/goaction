@@ -71,6 +71,11 @@ export default function TranscriptInput({
                     </>
                 )}
             </div>
+            {error && (
+                <div className="absolute top-full left-0 mt-1 bg-destructive/10 text-destructive text-xs px-2 py-1 rounded shadow-sm whitespace-nowrap z-50">
+                    {error}
+                </div>
+            )}
         </div>
     )
 }

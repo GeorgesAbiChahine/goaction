@@ -120,12 +120,36 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
     const scribe = useScribe({
         modelId: "scribe_v2_realtime",
         onError: (err) => {
-            const msg = String(err);
-            if (!msg.includes("1006")) {
-                console.error("Scribe error:", err);
+            console.error("Scribe error caught:", err);
+            let errorMessage = "Unknown error";
+            try {
+                if (err instanceof Error) {
+                    errorMessage = err.message;
+                } else if (typeof err === 'object' && err !== null) {
+                    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                    if ("message" in err) errorMessage = String((err as any).message);
+                    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                    else if ("type" in err) errorMessage = `Connection error: ${(err as any).type}`;
+                    else errorMessage = JSON.stringify(err);
+                } else {
+                    errorMessage = String(err);
+                }
+            } catch (_) {
+                errorMessage = "Error parsing error object";
             }
+            setScribeError(errorMessage);
         },
     });
+
+    // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+    useEffect(() => {
+        const handler = (event: PromiseRejectionEvent) => {
+            // Masking error as requested
+            event.preventDefault();
+        };
+        window.addEventListener("unhandledrejection", handler);
+        return () => window.removeEventListener("unhandledrejection", handler);
+    }, []);
 
     const handleToggleActive = async () => {
         if (scribe.isConnected) {
@@ -172,8 +196,24 @@ function FileEditorInner({ initialContent, fileId, initialHasFlowchart, fileTitl
             setPendingSegments([]);
 
         } catch (err: unknown) {
-            console.error("Connection failed", err);
-            setScribeError(err instanceof Error ? err.message : "Unknown error");
+            console.error("Connection failed caught:", err);
+            let errorMessage = "Connection failed";
+            try {
+                if (err instanceof Error) {
+                    errorMessage = err.message;
+                } else if (typeof err === 'object' && err !== null) {
+                    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                    if ("message" in err) errorMessage = String((err as any).message);
+                    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                    else if ("type" in err) errorMessage = `Connection error: ${(err as any).type}`;
+                    else errorMessage = "Connection failed (unknown object)";
+                } else {
+                    errorMessage = String(err);
+                }
+            } catch (e) {
+                errorMessage = "Error parsing connection error";
+            }
+            setScribeError(errorMessage);
         } finally {
             setIsConnecting(false);
         }
