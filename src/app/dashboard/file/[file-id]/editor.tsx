@@ -3,19 +3,20 @@
 import { EditorContainer, Editor as PlateEditor } from '@/components/ui/editor';
 import { FixedToolbar } from '@/components/ui/fixed-toolbar';
 import { MarkToolbarButton } from '@/components/ui/mark-toolbar-button';
-import { ToolbarButton, ToolbarSeparator } from '@/components/ui/toolbar';
+import { ToolbarButton } from '@/components/ui/toolbar';
 import { Plate } from 'platejs/react';
 
 interface EditorProps {
     editor: any;
     onCommit?: () => void;
     pendingCount?: number;
+    onChange?: (value: any) => void;
 }
 
-export default function Editor({ editor, onCommit, pendingCount = 0 }: EditorProps) {
+export default function Editor({ editor, onCommit, pendingCount = 0, onChange }: EditorProps) {
     return (
         <div>
-            <Plate editor={editor}>
+            <Plate editor={editor} onChange={onChange}>
                 <FixedToolbar className="justify-start w-fit mx-auto rounded-lg bg-sidebar border p-0.5">
                     <ToolbarButton
                         onClick={onCommit}
