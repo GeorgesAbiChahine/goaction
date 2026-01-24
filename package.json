@@ -18,7 +18,7 @@
   "dependencies": {
     "@auth0/nextjs-auth0": "^4.14.0",
     "@base-ui/react": "^1.1.0",
-    "@elevenlabs/elevenlabs-js": "^2.31.0",
+    "@elevenlabs/elevenlabs-js": "^2.32.0",
     "@elevenlabs/react": "^0.13.0",
     "@google/generative-ai": "^0.24.1",
     "@platejs/basic-nodes": "^52.0.11",
@@ -32,10 +32,10 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dagre": "^0.8.5",
-    "framer-motion": "^12.26.2",
-    "lucide-react": "^0.562.0",
-    "motion": "^12.26.2",
-    "next": "^16.1.3",
+    "framer-motion": "^12.29.0",
+    "lucide-react": "^0.563.0",
+    "motion": "^12.29.0",
+    "next": "^16.1.4",
     "platejs": "^52.0.17",
     "radix-ui": "^1.4.3",
     "react": "^19.2.3",
@@ -48,19 +48,19 @@
     "uuid": "^13.0.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.3.11",
+    "@biomejs/biome": "^2.3.12",
     "@tailwindcss/postcss": "^4.1.18",
     "@tauri-apps/cli": "^2.9.6",
     "@testing-library/dom": "^10.4.1",
-    "@testing-library/react": "^16.3.1",
-    "@types/node": "^25.0.9",
-    "@types/react": "^19.2.8",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^25.0.10",
+    "@types/react": "^19.2.9",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.2",
     "jsdom": "^27.4.0",
     "tailwindcss": "^4.1.18",
     "typescript": "~5.9.3",
-    "vite-tsconfig-paths": "^6.0.4",
-    "vitest": "^4.0.17"
+    "vite-tsconfig-paths": "^6.0.5",
+    "vitest": "^4.0.18"
   }
 }
